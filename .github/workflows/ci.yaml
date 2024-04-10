@@ -1,0 +1,58 @@
+name: Elixir CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  MIX_ENV: 'test'
+
+jobs:
+  test:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    name: Test on OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}} / Node ${{matrix.node}}
+    strategy:
+      matrix:
+        otp: ['26.2.1']
+        elixir: ['1.16.0']
+        node: ['20.11.0']
+    services:
+      db:
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        image: postgres:14
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Erlang/OTP with Elixir and mix
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+
+      - name: Setup Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version:  ${{matrix.node}}
+
+      - name: Install dependencies
+        run: |
+          mix do deps.get, compile
+
+      - name: Run tests
+        run: |
+          mix test --cover
