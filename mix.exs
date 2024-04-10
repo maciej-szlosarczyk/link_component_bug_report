@@ -8,6 +8,7 @@ defmodule LinkComponentBugReport.MixProject do
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
+      test_coverage: [summary: [threshold: 30]],
       aliases: aliases(),
       deps: deps()
     ]
